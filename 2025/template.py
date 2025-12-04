@@ -20,16 +20,16 @@ class Solution:
         self.lines = self.file.splitlines()
 
     def silver(self):
-        pass
+        return
 
     def gold(self):
-        pass
+        return
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("t", help="True/False")
-    parser.add_argument("c", help="task 1: 1, task 2: 2")
+    parser.add_argument("-t", help="True/False")
+    parser.add_argument("-c", help="task 1: 1, task 2: 2")
     args = parser.parse_args()
     case = int(args.case)
     test = True if args.test in ["True", "true"] else False
