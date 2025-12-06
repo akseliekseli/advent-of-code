@@ -31,8 +31,8 @@ if __name__ == "__main__":
     parser.add_argument("-t", help="True/False")
     parser.add_argument("-c", help="task 1: 1, task 2: 2")
     args = parser.parse_args()
-    case = int(args.case)
-    test = True if args.test in ["True", "true"] else False
+    case = int(args.c)
+    test = True if args.t in ["True", "true"] else False
 
     start = time.time()
     solution = Solution(test=test)
