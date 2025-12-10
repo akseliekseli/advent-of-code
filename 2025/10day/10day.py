@@ -5,47 +5,12 @@ import numpy as np
 import copy
 from collections import defaultdict
 import time
-
+from collections import deque
+from itertools import combinations
+from scipy.optimize import linprog
 import sys
 
 sys.path.append("..")
-
-
-class Graph:
-    def __init__(self):
-        self.graph = defaultdict(list)
-
-    # Function to add an edge to graph
-    def addEdge(self, u, v):
-        self.graph[u].append(v)
-
-    # Function to print a BFS of graph
-    def BFS(self, s):
-        # Mark all the vertices as not visited
-        visited = [False] * (max(self.graph) + 1)
-
-        # Create a queue for BFS
-        queue = []
-
-        # Mark the source node as
-        # visited and enqueue it
-        queue.append(s)
-        visited[s] = True
-
-        while queue:
-            # Dequeue a vertex from
-            # queue and print it
-            s = queue.pop(0)
-            print(s, end=" ")
-
-            # Get all adjacent vertices of the
-            # dequeued vertex s.
-            # If an adjacent has not been visited,
-            # then mark it visited and enqueue it
-            for i in self.graph[s]:
-                if not visited[i]:
-                    queue.append(i)
-                    visited[i] = True
 
 
 class Solution:
@@ -61,6 +26,10 @@ class Solution:
         self.lines = self.file.splitlines()
 
     def parse_data(self, line):
+        """
+        Parsing the data. This took quite long to code.
+        Helpful website to test regex: https://regex101.com/
+        """
         lights = re.search(r"\[(.*?)\]", line)
         light_str = lights.group(1) if lights else ""
         light_list = [0 if char == "." else 1 for char in light_str]
@@ -74,39 +43,63 @@ class Solution:
             else:
                 buttons.append([int(match)])
 
+        # one-hot encode buttons
         button_vectors = []
         for indices in buttons:
-            # Create a vector of N zeros
             vector = [0] * N
-            print(indices)
-            # Set the positions indicated by the indices to 1 (toggle ON)
             for index in indices:
-                # We need to ensure the index is valid (0 to N-1)
                 if 0 <= index < N:
                     vector[index] = 1
             button_vectors.append(vector)
         buttons = button_vectors
+
         joltage_match = re.search(r"\{(.*?)\}", line)
         joltage_str = joltage_match.group(1) if joltage_match else ""
-
         joltage_list = [int(val) for val in joltage_str.split(",") if joltage_str]
 
-        print(f"Original String: {line}\n")
-        print(f"1. lights (0/1 List): {light_list}")
-        print(f"2. buttons: {buttons}")
-        print(f"3. joltage: {joltage_list}")
         return light_list, buttons, joltage_list
 
     def silver(self):
+        """
+        Try all the button combinations starting from the shortest.
+        First to transform all off vector to desired is the shortest combo.
+        """
+        n_button_presses = 0
         for idx, line in enumerate(self.lines):
             light_list, buttons, joltage_list = self.parse_data(line)
-            g = Graph()
-            g.addEdge(light_list, buttons)
-            print(g)
-        return
+
+            all_button_combinations = []
+            for k in range(1, len(buttons) + 1):
+                combinations_of_length_k = list(combinations(range(len(buttons)), k))
+                all_button_combinations.extend(combinations_of_length_k)
+            for combo in all_button_combinations:
+                res_vector = np.zeros(len(light_list), dtype=int).T
+                for btn_idx in combo:
+                    # XOR to apply the button
+                    res_vector = res_vector ^ np.array(buttons[btn_idx])
+                if (res_vector == np.array(light_list)).all():
+                    n_button_presses += len(combo)
+                    break
+        return n_button_presses
 
     def gold(self):
-        return
+        """
+        Linear optimization as the legendary Sirkku taught us in a Bsc course. :D
+        """
+        n_button_presses = 0
+        for idx, line in enumerate(self.lines):
+            light_list, buttons, joltage_list = self.parse_data(line)
+
+            c = np.ones(len(buttons))
+            A_eq = np.array(buttons).T
+            b_eq = np.array(joltage_list)
+            # print(A_eq)
+            # print(c)
+            # print(b_eq)
+            # integrality=1 to have integer variables
+            result = linprog(c, A_eq=A_eq, b_eq=b_eq, integrality=1)
+            n_button_presses += result.fun
+        return int(n_button_presses)
 
 
 if __name__ == "__main__":
