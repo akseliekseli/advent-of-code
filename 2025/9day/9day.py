@@ -8,6 +8,10 @@ import time
 import math
 
 """
+Had nice algorithmic solutions which worked but were too slow so I looked at
+the picture and coded a himmeli to check only the two corners in the middle.
+
+
 Reference: https://stackoverflow.com/questions/5931735/finding-largest-rectangle-in-2d-array
 """
 
